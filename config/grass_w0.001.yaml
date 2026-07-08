@@ -1,0 +1,97 @@
+model:
+  order: 4
+  embedding_dimension: 128
+  bottle_hidden_size: 32
+  max_radius: 15
+  num_nodes: 10
+  radius_embed_dim: 16
+  use_equi_norm: true
+  short_cutoff_upper: 5
+  long_cutoff_upper: 15
+  num_scale_atom_layers: 4
+  num_long_range_layers: 4
+schedule:
+  lr_schedule: polynomial
+  lr_warmup_steps: 1000
+  lr_min: 1.0e-07
+job_id: svp_grass_w0.001_grass_only
+ckpt_path: /home/pepe/workbench/basisset_scaling/grass_dis_loss_train/svp_5000/grass_w0.001_grass_only/ckpts
+seed: 10086
+log_dir: /home/pepe/workbench/basisset_scaling/grass_dis_loss_train/svp_5000/grass_w0.001_grass_only/logs
+debug: false
+wandb:
+  open: true
+  wandb_api_key: mVry0ZUvTErOCGFq1cBjV
+  wandb_project: grassD_train
+  save_dir: /home/pepe/workbench/basisset_scaling/grass_dis_loss_train/svp_5000/grass_w0.001_grass_only/swanlab
+  wandb_name: svp_grass_w0.001_grass_only
+  wandb_group: ethanol_grassmann_weight_sweep
+  wandb_notes: 'grass_only_grassmann_weight=0.001 stationarity=OFF'
+model_backbone: SPHNet
+output_model: EquivariantScalar_viaTP
+hami_model:
+  name: HamiHead_sphnet
+  irreps_edge_embedding: null
+  num_layer: 2
+  max_radius_cutoff: 30
+  radius_embed_dim: 16
+  bottle_hidden_size: 32
+use_sparse_tp: false
+sparsity: 0.7
+num_epochs: 3000000
+max_steps: 60000
+batch_size: 32
+inference_batch_size: 32
+dataloader_num_workers: 12
+lr: 0.001
+multi_para_group: false
+weight_decay: 0
+enable_hami: true
+enable_symmetry: false
+enable_energy: false
+enable_forces: false
+enable_energy_hami_error: false
+enable_hami_orbital_energy: false
+enable_grassmann: true
+enable_stationarity: false
+energy_weight: 0
+forces_weight: 0
+hami_weight: 1
+orbital_energy_weight: 0
+grassmann_weight: 0.001
+stationarity_weight: 0
+energy_train_loss: mse
+forces_train_loss: mse
+orbital_energy_train_loss: mse
+hami_train_loss: maemse
+energy_val_loss: mae
+forces_val_loss: mae
+hami_val_loss: mae
+ed_type: naive
+ed_trunc_factor: 3.0
+ngpus: 1
+num_nodes: 1
+precision: 32
+gradient_clip_val: 0.16
+early_stopping_patience: 300000
+val_check_interval: null
+test_interval: 10
+save_interval: 10
+data_name: md17_ethanol
+basis: def2-svp
+dataset_path: /home/pepe/workbench/basisset_scaling/lmdb_data/sphnet_gcnet_ethanol/def2svp/data.mdb/data.mdb
+index_path: /home/pepe/workbench/basisset_scaling/lmdb_data/sphnet_gcnet_ethanol/def2svp/index_5000
+dataset_size: -1
+train_ratio: 0.8
+val_ratio: 0.1
+test_ratio: 0.1
+cutoff_lower: 0.0
+cutoff_upper: 5.0
+used_cache: false
+ema_decay: 1
+unit: 1
+activation: silu
+remove_init: true
+remove_atomref_energy: true
+num_sanity_val_steps: 2
+check_val_every_n_epoch: 1

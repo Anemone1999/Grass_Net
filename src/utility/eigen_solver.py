@@ -139,10 +139,7 @@ class ED_trunc(Function):
     @staticmethod
     def forward(ctx, input, trunc_factor=3, num_orb=-1):
         p = input
-        p = p.cpu() #SVD is faster on CPU
         eig_diag, eig_vec = torch.linalg.eigh(p)
-        eig_diag = eig_diag.to(input)
-        eig_vec = eig_vec.to(input)
         trunc_factor = torch.tensor(trunc_factor).to(input)
         if num_orb == -1:
             num_orb = p.shape[-1]

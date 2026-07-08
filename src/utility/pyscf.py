@@ -98,21 +98,15 @@ def transform_h_into_pyscf(hamiltonian: np.ndarray, mol: gto.Mole)-> np.ndarray:
 
     return hamiltonian_pyscf
 
-    
+     
 def get_pyscf_obj_from_dataset(pos,atomic_numbers,  basis: str="def2-svp",unit=None, xc: str="b3lyp5", gpu=False,verbose=1):
     """
-    Get the PySCF Mole and KS objects from a dataset.
+    Get the PySCF Mole and SCF objects from a dataset.
+    If gpu>0, uses gpu4pyscf.dft.rks.RKS (GPU-accelerated).
+    Returns: (mol, mf, factory)
 
     Args:
-        data (dict): The dataset containing the molecular data.
-        idx (int): The index of the molecular data to retrieve.
-        basis (str, optional): The basis set to use. Defaults to "def2-svp".
-        xc (str, optional): The exchange-correlation functional to use. Defaults to "b3lyp5".
-        gpu (bool, optional): Whether to use GPU acceleration. Defaults to False.
-
-    Returns:
-        tuple: A tuple containing the PySCF Mole and KS objects.
-
+        gpu: 0/False for CPU, >0 for number of GPUs to use
     """
 
     mol = gto.Mole()
@@ -120,28 +114,23 @@ def get_pyscf_obj_from_dataset(pos,atomic_numbers,  basis: str="def2-svp",unit=N
     mol.basis = basis
     mol.verbose = verbose
     mol.build(unit=unit)
-    # mf = dft.KS(mol, xc=xc)
-    mf = scf.RKS(mol)
-    mf.grids.level=3
-    mf.max_cycle=20
-    mf.direct_scf_tol=1e-10 # previous is 1e-12
-    mf.conv_tol_grad=3.16e-5
-    mf.conv_tol=1e-8   # 1e-13
-    mf.xc = "b3lyp5"
     factory = None
     if gpu:
         try:
-            from madft.cuda_factory import CUDAFactory
-            from madft.cuda_factory import CUDAParams
-            params = CUDAParams()
-            params.gpu_id_list = list(range(int(gpu)))
-            factory = CUDAFactory()
-            factory.params = params
-            mf = factory.generate_cuda_instance(mf)
+            from gpu4pyscf.dft import rks as gpu_rks
+            mf = gpu_rks.RKS(mol, xc=xc)
+            mf.grids.level = 3
+            mf.conv_tol = 1e-8
             return mol, mf, factory
-        except:
-            print("CUDA is not available, falling back to CPU")
-            aaa=111
+        except ImportError:
+            pass
+    mf = scf.RKS(mol)
+    mf.grids.level=3
+    mf.max_cycle=20
+    mf.direct_scf_tol=1e-10
+    mf.conv_tol_grad=3.16e-5
+    mf.conv_tol=1e-8
+    mf.xc = "b3lyp5"
     return mol, mf, factory
 
 def get_psycf_obj_from_xyz(file_name: str, basis: str='def2-svp', xc: str='b3lyp5', gpu=False):

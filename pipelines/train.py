@@ -6,13 +6,13 @@ import pytorch_lightning as pl
 import glob
 from pytorch_lightning.callbacks import EarlyStopping
 from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
-from pytorch_lightning.loggers import WandbLogger
+from swanlab.integration.pytorch_lightning import SwanLabLogger as WandbLogger
 from pytorch_lightning.strategies import DDPStrategy
 from pytorch_lightning.utilities import rank_zero_only
 from pathlib import Path
 
 import torch
-import wandb
+import swanlab as wandb
 import os
 # os.environ["WANDB_MODE"] = "offline"
 # print(f"Current PYTHONPATH: {os.environ.get('PYTHONPATH')}")  
@@ -22,7 +22,8 @@ import random
 import hydra
 from omegaconf import DictConfig, OmegaConf
 
-os.environ["CUDA_VISIBLE_DEVICES"]="1"
+if "CUDA_VISIBLE_DEVICES" not in os.environ:
+    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 # Add src in root folder
 cur_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(cur_dir, ".."))
@@ -96,22 +97,24 @@ def main(config):
         config.log_dir, name="tensorbord", version="", default_hp_metric=False
     )
     csv_logger = CSVLogger(config.log_dir, name="", version="")
-    # wandb is project/group/name format to save all the log
     wandb_logger = WandbLogger(
                                entity=None,
                                project=config.wandb.wandb_project,
                                group = config.wandb.wandb_group,
-                               name=config.job_id, 
-                               settings=wandb.Settings(start_method='fork', code_dir="."),
+                               name=config.job_id,
                                )
 
-    # login into wandb
+    # login into swanlab
     @rank_zero_only
     def log_code():
         if config.wandb.open:
-            wandb.login(key=config.wandb.wandb_api_key, relogin=True)
-            wandb_logger.experiment # runs wandb.init, so then code can be logged next
-            wandb.run.log_code(".", include_fn=lambda path: path.endswith(".py") or path.endswith(".yaml"))
+            wandb.login(api_key=config.wandb.wandb_api_key, save=True)
+            wandb.init(
+                project=config.wandb.wandb_project,
+                experiment_name=config.wandb.wandb_name,
+                config=OmegaConf.to_container(config, resolve=True),
+                logdir=config.log_dir,
+            )
     log_code()
 
     if config.precision == '32':

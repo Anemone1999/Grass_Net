@@ -241,8 +241,8 @@ class EnergyHamiError(ErrorMetric):
             start , end = batch_data['ptr'][i],batch_data['ptr'][i+1]
             pos = batch_data['pos'][start:end].detach().cpu().numpy()
             atomic_numbers = batch_data['atomic_numbers'][start:end].detach().cpu().numpy()
-            mol, mf,factory = get_pyscf_obj_from_dataset(pos,atomic_numbers, basis=self.basis, 
-                                                         xc='b3lyp5', gpu=False, verbose=1)
+            mol, mf,factory = get_pyscf_obj_from_dataset(pos,atomic_numbers, basis=self.basis,
+                                                          xc='b3lyp5', gpu=True, verbose=1)
             dm0 = mf.init_guess_by_minao()
             init_h = mf.get_fock(dm=dm0)
 
@@ -291,7 +291,7 @@ class _OrbitalEnergyErrorBase(ErrorMetric):
                 pos = batch_data['pos'][start:end].detach().cpu().numpy()
                 mol, mf, factory = get_pyscf_obj_from_dataset(pos, atomic_numbers, basis=basis, gpu=True)
                 s1e = mf.get_ovlp()
-                overlap_matrix = torch.from_numpy(s1e).float().to(full_hami_pred[i].device)
+                overlap_matrix = torch.as_tensor(s1e, dtype=torch.float32, device=full_hami_pred[i].device)
                 if factory: factory.free_resources()
 
             if 'init_fock' in batch_data:
@@ -526,6 +526,97 @@ class OrbitalEnergyErrorV2(_OrbitalEnergyErrorBase):
         return error_dict
 
 
+class GrassmannError(_OrbitalEnergyErrorBase):
+    def __init__(self, enable_grassmann, enable_stationarity,
+                 grassmann_weight, stationarity_weight, trainer=None,
+                 basis="def2-svp", ed_type='trunc', trunc_factor=3.0, pi_iter=19):
+        super().__init__(None)
+        self.trainer = trainer
+        self.enable_grassmann = enable_grassmann
+        self.enable_stationarity = enable_stationarity
+        self.grassmann_weight = grassmann_weight
+        self.stationarity_weight = stationarity_weight
+        self.basis = basis
+        self.name = "grassmann_loss"
+        self.ed_type = ed_type
+        self.trunc_factor = trunc_factor
+
+    @staticmethod
+    def _solve_eigh(full_hamiltonian, overlap_matrix, ed_type='trunc', trunc_factor=3.0):
+        eps = 1e-8
+        try:
+            s_eigvals, s_eigvecs = torch.linalg.eigh(overlap_matrix)
+            s_eigvals = torch.where(s_eigvals > eps, s_eigvals, eps)
+            frac = s_eigvecs / torch.sqrt(s_eigvals).unsqueeze(-2)
+            Fs = frac.T @ full_hamiltonian @ frac
+
+            if ed_type == 'naive':
+                e_vals, e_vecs = torch.linalg.eigh(Fs)
+            elif ed_type == 'trunc':
+                n = Fs.shape[-1]
+                e_vals, e_vecs = ED_trunc.apply(Fs.unsqueeze(0), trunc_factor, n)
+                e_vals, e_vecs = e_vals.squeeze(0), e_vecs.squeeze(0)
+            elif ed_type == 'trunc_cpu':
+                n = Fs.shape[-1]
+                Fs_cpu = Fs.cpu()
+                e_vals, e_vecs = ED_trunc.apply(Fs_cpu.unsqueeze(0), trunc_factor, n)
+                e_vals = e_vals.to(Fs.device); e_vecs = e_vecs.to(Fs.device)
+                e_vals, e_vecs = e_vals.squeeze(0), e_vecs.squeeze(0)
+            elif ed_type == 'power_iteration':
+                e_vals, e_vecs = ED_PI_Layer(Fs.unsqueeze(0), n, False)
+                e_vals, e_vecs = e_vals.squeeze(0), e_vecs.squeeze(0)
+            else:
+                raise NotImplementedError(f"ed_type={ed_type}")
+
+            e_vecs = frac @ e_vecs
+            return True, e_vals, e_vecs
+        except RuntimeError:
+            return False, None, None
+
+    def cal_loss(self, batch_data, error_dict={}, metric=None):
+        self.trainer.model.hami_model.build_final_matrix(batch_data)
+        error_dict["loss"] = error_dict.get("loss", 0)
+
+        grass_losses, stat_losses = [], []
+        compute_grass = self.enable_grassmann and self.grassmann_weight != 0
+        compute_stat = self.enable_stationarity and self.stationarity_weight != 0
+        if not (compute_grass or compute_stat):
+            return error_dict
+
+        batch_iterator = self._iterate_batch(batch_data, self.basis)
+        for atomic_numbers, overlap_matrix, full_hami_pred_i, full_hami_i, _, _ in batch_iterator:
+            nelec = atomic_numbers.sum().item()
+            nocc = nelec // 2
+
+            sym_gt, e_gt, c_gt = self._solve_eigh(full_hami_i, overlap_matrix, self.ed_type, self.trunc_factor)
+            sym_pred, e_pred, c_pred = self._solve_eigh(full_hami_pred_i, overlap_matrix, self.ed_type, self.trunc_factor)
+
+            if sym_gt and sym_pred:
+                c_gt_occ = c_gt[:, :nocc]
+                c_pred_occ = c_pred[:, :nocc]
+
+                if compute_grass:
+                    M_cross = c_gt_occ.T @ overlap_matrix @ c_pred_occ
+                    grass_losses.append(nocc - (M_cross ** 2).sum())
+
+                if compute_stat:
+                    D_pred = 2 * c_pred_occ @ c_pred_occ.T
+                    delta = full_hami_i @ D_pred @ overlap_matrix - overlap_matrix @ D_pred @ full_hami_i
+                    stat_losses.append((delta ** 2).sum())
+
+        if compute_grass and grass_losses:
+            lg = torch.stack(grass_losses).mean()
+            error_dict['grassmann_loss'] = lg.detach()
+            error_dict['loss'] += self.grassmann_weight * lg
+
+        if compute_stat and stat_losses:
+            ls = torch.stack(stat_losses).mean()
+            error_dict['stationarity_loss'] = ls.detach()
+            error_dict['loss'] += self.stationarity_weight * ls
+
+        return error_dict
+
+
 class LNNP(LightningModule):
     def __init__(self, hparams, mean=None, std=None):
         super(LNNP, self).__init__()
@@ -536,6 +627,8 @@ class LNNP(LightningModule):
         self.enable_forces = self.hparams.enable_forces
         self.enable_hami = self.hparams.enable_hami
         self.enable_hami_orbital_energy = self.hparams.enable_hami_orbital_energy
+        self.enable_grassmann = self.hparams.get("enable_grassmann", False)
+        self.enable_stationarity = self.hparams.get("enable_stationarity", False)
         
         self.construct_loss_func_list()
         self._reset_losses_dict()
@@ -556,6 +649,12 @@ class LNNP(LightningModule):
         if self.enable_hami_orbital_energy:
             self.loss_func_list_train.append(OrbitalEnergyError(self.hparams.orbital_energy_weight,
                  self, self.hparams.orbital_energy_train_loss, self.hparams.basis, ed_type=self.hparams.ed_type))
+        if self.enable_grassmann or self.enable_stationarity:
+            self.loss_func_list_train.append(GrassmannError(
+                self.enable_grassmann, self.enable_stationarity,
+                self.hparams.grassmann_weight, self.hparams.stationarity_weight,
+                self, self.hparams.basis, ed_type=self.hparams.ed_type,
+                trunc_factor=self.hparams.get("ed_trunc_factor", 3.0)))
 
         self.loss_func_list_val = []
         if self.enable_energy:
@@ -566,7 +665,13 @@ class LNNP(LightningModule):
             self.loss_func_list_val.append(HamiltonianError(self.hparams.hami_weight,self.hparams.hami_val_loss, self.hparams.hami_model.name))
         if self.enable_hami_orbital_energy:
             self.loss_func_list_val.append(OrbitalEnergyError(self.hparams.orbital_energy_weight,
-                 self, self.hparams.orbital_energy_train_loss, self.hparams.basis, ed_type=self.hparams.ed_type))        
+                 self, self.hparams.orbital_energy_train_loss, self.hparams.basis, ed_type=self.hparams.ed_type))
+        if self.enable_grassmann or self.enable_stationarity:
+            self.loss_func_list_val.append(GrassmannError(
+                self.enable_grassmann, self.enable_stationarity,
+                self.hparams.grassmann_weight, self.hparams.stationarity_weight,
+                self, self.hparams.basis, ed_type=self.hparams.ed_type,
+                trunc_factor=self.hparams.get("ed_trunc_factor", 3.0)))
         
         # some real world / application level evaluation.
         # a little time consuming, thus, in data module, only 1 batch data is used.

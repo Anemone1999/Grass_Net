@@ -61,6 +61,10 @@ class Config(BaseSchema):
     enable_forces: bool = False
     enable_energy_hami_error: bool = False
     enable_hami_orbital_energy: bool = False
+    enable_grassmann: bool = False
+    enable_stationarity: bool = False
+    grassmann_weight: float = 0.001
+    stationarity_weight: float = 0.05
     energy_weight: float = 0 #Weighting factor for energies in the loss function
     forces_weight: float = 0 #Weighting factor for forces in the loss function
     hami_weight: float = 1 #Weighting factor for hami in the loss function
@@ -73,6 +77,7 @@ class Config(BaseSchema):
     forces_val_loss: str = 'mae'
     hami_val_loss: str = 'mae'
     ed_type: str = 'naive'
+    ed_trunc_factor: float = 3.0
     sparse_loss: bool = False
     sparse_loss_coeff: float = 1e-3
     ngpus: int = 1

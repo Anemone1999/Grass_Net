@@ -87,10 +87,28 @@ class DataModule(LightningDataModule):
                 )
                 self.idx_train = index[0]
                 self.idx_val = index[1]
-                self.idx_test = index[2]  
+                self.idx_test = index[2]
+
+            if "md17" in self.data_name.lower() and self.index_path:
+                target_mole = self.data_name.split("_")[-1]
+                index_file = os.path.join(self.index_path, f'MD17_{target_mole}.pt')
+                if os.path.exists(index_file):
+                    print(f"loading md17 split from {index_file}")
+                    index = torch.load(index_file, weights_only=False, map_location='cpu')
+                    if isinstance(index[0], np.ndarray):
+                        self.idx_train = torch.from_numpy(index[0]).long()
+                        self.idx_val = torch.from_numpy(index[1]).long()
+                        self.idx_test = torch.from_numpy(index[2]).long()
+                    else:
+                        self.idx_train = index[0]
+                        self.idx_val = index[1]
+                        self.idx_test = index[2]
 
             if "qh9" not in self.data_name.lower():
-                len_dataset = min(self.config["dataset_size"],len(dataset)) if self.config["dataset_size"]!=-1 else len(dataset)
+                if hasattr(self, 'idx_train') and self.idx_train is not None:
+                    len_dataset = max(self.idx_train.max().item(), self.idx_val.max().item(), self.idx_test.max().item()) + 1
+                else:
+                    len_dataset = min(self.config["dataset_size"],len(dataset)) if self.config["dataset_size"]!=-1 else len(dataset)
             else:
                 len_dataset = max(self.idx_train.max(),self.idx_val.max(),self.idx_test.max())+1
             # if "mol" in self.data_name.lower():
@@ -117,7 +135,10 @@ class DataModule(LightningDataModule):
                 self.dataset = Subset(dataset,indices=local_examples) if "qh9" not in self.data_name.lower() else dataset
                 
             if "qh9" not in self.data_name.lower():
-                self.idx_train, self.idx_val, self.idx_test = make_splits(len(self.dataset),
+                if hasattr(self, 'idx_train') and self.idx_train is not None:
+                    pass  # use pre-loaded indices
+                else:
+                    self.idx_train, self.idx_val, self.idx_test = make_splits(len(self.dataset),
                     train_ratio,val_ratio,test_ratio,
                     self.seed,
                     splits = None,

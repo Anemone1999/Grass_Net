@@ -350,6 +350,7 @@ class NonDiagLayer(torch.nn.Module):
         if isinstance(node_pair, tuple):
             print('dynamic sparse tensor product finished, returning to fixed graph tensor product')
             self.reset_tp(node_pair[0])
+            os.makedirs(self.ckpt_path, exist_ok=True)
             torch.save(node_pair[0],f'{self.ckpt_path}/nondiag_ins_{self.id}.pt')
             torch.save(node_pair[2],f'{self.ckpt_path}/nondiag_indice_{self.id}.pt')
             self.indice = node_pair[2]
@@ -490,6 +491,7 @@ class DiagLayer(torch.nn.Module):
         if isinstance(x, tuple):
             print('dynamic sparse tensor product finished, returning to fixed graph tensor product')
             self.reset_tp(x[0],x[3])
+            os.makedirs(self.ckpt_path, exist_ok=True)
             torch.save(x[0],f'{self.ckpt_path}/diag_ins_{self.id}.pt')
             torch.save(x[3],f'{self.ckpt_path}/diag_weight_{self.id}.pt')
             x = x[1]

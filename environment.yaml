@@ -5,7 +5,7 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python=3.14
+  - python=3.11
   - pip
   - build
   - pybind11
@@ -34,7 +34,6 @@ dependencies:
   - pip:
     - pyscf==2.4.0
     - apsw
-    - cupy-wheel
     - torch_runstats
     - lmdb
     - mlflow

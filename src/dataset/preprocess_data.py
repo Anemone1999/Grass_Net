@@ -424,8 +424,8 @@ def cal_initH(Z, R):
     '''
     pos = R
     atomic_numbers = Z
-    mol, mf, factory = get_pyscf_obj_from_dataset(pos,atomic_numbers, basis='def2-svp', 
-                                                    xc='pbe', gpu=False, verbose=1)
+    mol, mf, factory = get_pyscf_obj_from_dataset(pos,atomic_numbers, basis='def2-svp',
+                                                    xc='pbe', verbose=1)
     dm0 = mf.init_guess_by_minao()
     init_h = mf.get_fock(dm=dm0)
 

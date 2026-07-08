@@ -41,6 +41,10 @@ weight_decay: 0
 enable_hami: true
 enable_energy_hami_error: false # whether to calculate the occupiedenergy MAE and C similarity during validation. This is very slow.
 enable_hami_orbital_energy: false # set it to true for WALoss
+enable_grassmann: false # set to true for Grassmann loss (occupied subspace distance)
+enable_stationarity: false # set to true for Stationarity loss (FDS-SDF commutator)
+grassmann_weight: 1.0
+stationarity_weight: 1.0
 hami_train_loss: 'maemse'
 hami_val_loss: 'mae'
 ngpus: 1

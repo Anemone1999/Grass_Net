@@ -184,9 +184,10 @@ class MdbDataset(Dataset):
                 "edge_index":data.edge_index.numpy(),
                 }
     def connect_db(self, lmdb_path=None):
+        is_dir = os.path.isdir(str(lmdb_path))
         env = lmdb.open(
             str(lmdb_path),
-            subdir=False,
+            subdir=is_dir,
             readonly=True,
             lock=False,
             readahead=False,
@@ -378,9 +379,10 @@ class LmdbDataset(Dataset):
     #     out.update({})
     
     def connect_db(self, lmdb_path=None):
+        is_dir = os.path.isdir(str(lmdb_path))
         env = lmdb.open(
             str(lmdb_path),
-            subdir=False,
+            subdir=is_dir,
             readonly=True,
             lock=False,
             readahead=False,
