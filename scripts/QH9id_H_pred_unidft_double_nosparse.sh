@@ -1,0 +1,53 @@
+#!/bin/bash
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+filename=$(basename "$0")
+wandb_name="${filename%.sh}"
+
+cd "$SCRIPT_DIR"
+cd ../
+root_path=$(realpath ../)
+# determine whether to run locally or to run remotely
+if [[ "$root_path" == *"castor-ice"* ]]; then
+    echo "using relative path, running locally"
+else
+    echo "using remote path, running remotely"
+    root_path="/mnt/castor-ice/workspace"
+fi
+
+rel_dataset_path="./datasets/QH9Stable/full_data"
+index_path=$(realpath -m "${root_path}/${rel_dataset_path}")
+dataset_path=$(realpath -m "${index_path}/data.mdb")
+
+rel_hydra_path="./outputs_sphnet/$(date +%Y-%m-%d)/$(date +%H-%M-%S)/${wandb_name}"
+hydra_path=$(realpath -m "${root_path}/${rel_hydra_path}")
+
+rel_log_path="./log_sphnet/train"
+log_path=$(realpath -m "${root_path}/${rel_log_path}")
+
+python pipelines/train.py \
+ hydra_path="${hydra_path}" \
+ precision="64" \
+ dataloader_num_workers=8 \
+ batch_size=32 \
+ inference_batch_size=32 \
+ wandb.open=True \
+ wandb.wandb_group="debug" \
+ wandb.wandb_project="sphnet_debug" \
+ wandb.wandb_name=${wandb_name} \
+ data_name="qh9_stable_iid" \
+ basis="def2-svp" \
+ index_path="${index_path}" \
+ dataset_path="${dataset_path}" \
+ remove_init=True \
+ pred_target='H' \
+ use_sparse_tp=False \
+ enable_hami=True \
+ hami_weight=1 \
+ enable_DM=True \
+ dm_weight=0.03 \
+ enable_hami_orbital_energy=True \
+ orbital_energy_weight=0.02 \
+ enable_rho=True \
+ rho_weight=0.02 \
+ 2>&1 | tee >(grep --line-buffered -vE "it/s|v_num=|%\|" > \
+ "${log_path}/$(date +%Y-%m-%d)-$(date +%H-%M-%S)-${wandb_name}.log")
