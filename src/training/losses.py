@@ -795,7 +795,8 @@ class _OrbitalEnergyErrorBase(ErrorMetric):
 class GrassmannError(_OrbitalEnergyErrorBase):
     def __init__(self, enable_grassmann, enable_stationarity,
                  grassmann_weight, stationarity_weight, trainer=None,
-                 basis="def2-svp", ed_type='trunc', trunc_factor=3.0, pi_iter=19):
+                 basis="def2-svp", ed_type='trunc', trunc_factor=3.0,
+                 grassmann_metric='projection', pi_iter=19):
         super().__init__(None)
         self.trainer = trainer
         self.enable_grassmann = enable_grassmann
@@ -806,6 +807,7 @@ class GrassmannError(_OrbitalEnergyErrorBase):
         self.name = "grassmann_loss"
         self.ed_type = ed_type
         self.trunc_factor = trunc_factor
+        self.grassmann_metric = grassmann_metric
 
     @staticmethod
     def _solve_eigh(full_hamiltonian, overlap_matrix, ed_type='trunc', trunc_factor=3.0):
@@ -864,7 +866,12 @@ class GrassmannError(_OrbitalEnergyErrorBase):
 
                 if compute_grass:
                     M_cross = c_gt_occ.T @ overlap_matrix @ c_pred_occ
-                    grass_losses.append(nocc - torch.clamp((M_cross ** 2).sum(), max=nocc))
+                    if self.grassmann_metric == 'geodesic':
+                        _, s, _ = torch.linalg.svd(M_cross)
+                        theta = torch.arccos(s.clamp(-1, 1))
+                        grass_losses.append((theta ** 2).sum())
+                    else:
+                        grass_losses.append(nocc - torch.clamp((M_cross ** 2).sum(), max=nocc))
 
                 if compute_stat:
                     D_pred = 2 * c_pred_occ @ c_pred_occ.T

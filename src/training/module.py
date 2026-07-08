@@ -193,7 +193,8 @@ class LNNP(LightningModule):
                 self.enable_grassmann, self.enable_stationarity,
                 self.hparams.grassmann_weight, self.hparams.stationarity_weight,
                 self, self.hparams.basis, ed_type=self.hparams.ed_type,
-                trunc_factor=self.hparams.get("ed_trunc_factor", 3.0)))
+                trunc_factor=self.hparams.get("ed_trunc_factor", 3.0),
+                grassmann_metric=self.hparams.get("grassmann_metric", "projection")))
         self.loss_func_list_val = []
         if self.enable_hami:
             self.loss_func_list_val.append(HamiltonianError(self.hparams.hami_weight,self.hparams.hami_val_loss, self.hparams.hami_model.name))
@@ -214,7 +215,8 @@ class LNNP(LightningModule):
                 self.enable_grassmann, self.enable_stationarity,
                 self.hparams.grassmann_weight, self.hparams.stationarity_weight,
                 self, self.hparams.basis, ed_type=self.hparams.ed_type,
-                trunc_factor=self.hparams.get("ed_trunc_factor", 3.0)))
+                trunc_factor=self.hparams.get("ed_trunc_factor", 3.0),
+                grassmann_metric=self.hparams.get("grassmann_metric", "projection")))
 
         
         # some real world / application level evaluation.
