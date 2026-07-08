@@ -866,10 +866,16 @@ class GrassmannError(_OrbitalEnergyErrorBase):
 
                 if compute_grass:
                     M_cross = c_gt_occ.T @ overlap_matrix @ c_pred_occ
-                    if self.grassmann_metric == 'geodesic':
+                    if self.grassmann_metric == 'densityS':
                         P_pred = c_pred_occ @ c_pred_occ.T @ overlap_matrix
                         P_gt = c_gt_occ @ c_gt_occ.T @ overlap_matrix
                         grass_losses.append(((P_pred - P_gt) ** 2).sum() / c_gt_occ.shape[0])
+                    elif self.grassmann_metric == 'geodesic':
+                        # canonical geodesic (SVD principal angles) — unstable when
+                        # singular values are near-degenerate (1/(s_j²-s_i²) in grads)
+                        _, s, _ = torch.linalg.svd(M_cross)
+                        theta = torch.acos(s.clamp(-1, 1))
+                        grass_losses.append((theta ** 2).sum())
                     else:
                         grass_losses.append(nocc - torch.clamp((M_cross ** 2).sum(), max=nocc))
 

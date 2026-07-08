@@ -29,7 +29,7 @@ python pipelines/train.py \
   +enable_grassmann=true \
   +enable_stationarity=false \
   +grassmann_weight=1.0 \
-  +grassmann_metric=geodesic \
+  +grassmann_metric=densityS \
   ed_type=naive \
   ed_trunc_factor=3.0 \
   gradient_clip_val=0.16 \
