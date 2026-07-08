@@ -35,6 +35,7 @@ python pipelines/train.py \
   used_cache=false \
   job_id=v2_grass_w0.001 \
   wandb.open=true \
+  wandb.wandb_name=v2_grass_w0.001 \
   wandb.wandb_project=grassD_train \
   wandb.wandb_api_key=mVry0ZUvTErOCGFq1cBjV \
   precision=32
