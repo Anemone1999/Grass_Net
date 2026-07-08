@@ -864,7 +864,7 @@ class GrassmannError(_OrbitalEnergyErrorBase):
 
                 if compute_grass:
                     M_cross = c_gt_occ.T @ overlap_matrix @ c_pred_occ
-                    grass_losses.append(nocc - (M_cross ** 2).sum())
+                    grass_losses.append(nocc - torch.clamp((M_cross ** 2).sum(), max=nocc))
 
                 if compute_stat:
                     D_pred = 2 * c_pred_occ @ c_pred_occ.T
