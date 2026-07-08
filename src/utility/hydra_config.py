@@ -118,7 +118,7 @@ class Config(BaseSchema):
     enable_stationarity: bool = False
     grassmann_weight: float = 0.001
     stationarity_weight: float = 0.05
-    ed_type: str = 'trunc'
+    ed_type: str = 'naive'
     ed_trunc_factor: float = 3.0
     sparse_loss: bool = False
     sparse_loss_coeff: float = 1e-3
