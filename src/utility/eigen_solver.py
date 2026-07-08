@@ -75,12 +75,19 @@ def truncated_orbitals(s, trunc_factor, num_orb):
     # print(threshold.item(), target.sum().item(), target.shape)
     return p
 
-def truncated_gradients(s, trunc_factor):
-    # NOTE: here change the clip cerition for QH9 molecule
+def truncated_gradients(s, trunc_factor, num_orb=None):
+    if num_orb is not None:
+        dim = s.size(1)
+        p = 1 / (s.unsqueeze(-1) - s.unsqueeze(-2))
+        p[:, torch.arange(0, dim), torch.arange(0, dim)] = 0
+        batch_std = p[:, :num_orb, :num_orb].std(dim=(1, 2)).mean()
+        threshold = trunc_factor * batch_std
+        p[p > threshold] = threshold
+        p[p < -threshold] = -threshold
+        return p
     target = s.abs()
     threshold = target.quantile(trunc_factor)
     s = torch.clamp(s, min=-threshold, max=threshold)
-    # print(threshold.item(), target.sum().item(), target.shape)
     return s
 
 class ED_trunc_p(Function):

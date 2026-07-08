@@ -240,7 +240,7 @@ class DataModule(LightningDataModule):
             drop_last=True,
             pin_memory=True,
             persistent_workers=(self.config["dataloader_num_workers"] > 0),
-            prefetch_factor=2,
+            prefetch_factor=2 if self.config["dataloader_num_workers"] > 0 else None,
         )
 
         return dl

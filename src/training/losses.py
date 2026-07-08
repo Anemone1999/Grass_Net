@@ -755,7 +755,7 @@ class _OrbitalEnergyErrorBase(ErrorMetric):
     @staticmethod
     def _iterate_batch(batch_data, basis):
         full_hami_pred = batch_data['pred_hamiltonian']
-        full_hami = batch_data['hamiltonian']
+        full_hami = batch_data['fock']
         batch_size = batch_data['ptr'].shape[0] - 1
 
         for i in range(batch_size):
@@ -771,8 +771,18 @@ class _OrbitalEnergyErrorBase(ErrorMetric):
                 overlap_matrix = torch.as_tensor(s1e, dtype=torch.float32, device=full_hami_pred[i].device)
                 if factory: factory.free_resources()
 
-            if 'init_fock' in batch_data:
-                init_fock = torch.from_numpy(batch_data['init_fock'][i]).to(full_hami_pred[i].device)
+            if 'fock_init' in batch_data:
+                init_fock = batch_data['fock_init'][i]
+                if isinstance(init_fock, np.ndarray):
+                    init_fock = torch.from_numpy(init_fock)
+                init_fock = init_fock.to(full_hami_pred[i].device)
+                full_hami_pred_i = full_hami_pred[i] + init_fock
+                full_hami_i = full_hami[i] + init_fock
+            elif 'init_fock' in batch_data:
+                init_fock = batch_data['init_fock'][i]
+                if isinstance(init_fock, np.ndarray):
+                    init_fock = torch.from_numpy(init_fock)
+                init_fock = init_fock.to(full_hami_pred[i].device)
                 full_hami_pred_i = full_hami_pred[i] + init_fock
                 full_hami_i = full_hami[i] + init_fock
             else:
