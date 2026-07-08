@@ -79,7 +79,8 @@ def main(config):
     model = LNNP(config)
 
     callbacks = []
-    callbacks.append(EarlyStopping("val_loss", patience=config.early_stopping_patience))
+    callbacks.append(EarlyStopping("val_loss", patience=config.early_stopping_patience,
+                                   check_on_train_epoch_end=False))
     # Rule 1: save first 10 epochs unconditionally
     class _First10Callback(pl.Callback):
         def on_validation_end(self, trainer, pl_module):
