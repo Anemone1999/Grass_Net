@@ -847,8 +847,8 @@ class GrassmannError(_OrbitalEnergyErrorBase):
         error_dict["loss"] = error_dict.get("loss", 0)
 
         grass_losses, stat_losses = [], []
-        compute_grass = self.enable_grassmann and self.grassmann_weight != 0
-        compute_stat = self.enable_stationarity and self.stationarity_weight != 0
+        compute_grass = self.enable_grassmann
+        compute_stat = self.enable_stationarity
         if not (compute_grass or compute_stat):
             return error_dict
 
@@ -867,9 +867,9 @@ class GrassmannError(_OrbitalEnergyErrorBase):
                 if compute_grass:
                     M_cross = c_gt_occ.T @ overlap_matrix @ c_pred_occ
                     if self.grassmann_metric == 'geodesic':
-                        _, s, _ = torch.linalg.svd(M_cross)
-                        theta = torch.acos(s.clamp(-1, 1))
-                        grass_losses.append((theta ** 2).sum())
+                        P_pred = c_pred_occ @ c_pred_occ.T @ overlap_matrix
+                        P_gt = c_gt_occ @ c_gt_occ.T @ overlap_matrix
+                        grass_losses.append(((P_pred - P_gt) ** 2).sum() / c_gt_occ.shape[0])
                     else:
                         grass_losses.append(nocc - torch.clamp((M_cross ** 2).sum(), max=nocc))
 

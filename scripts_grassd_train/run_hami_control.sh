@@ -39,4 +39,5 @@ python pipelines/train.py \
   use_sparse_tp=false \
   remove_init=true \
   used_cache=false \
-  precision=32
+  precision=32 \
+  "log_dir=/home/pepe/workbench/grassd_outputs/v2_hami_control"
