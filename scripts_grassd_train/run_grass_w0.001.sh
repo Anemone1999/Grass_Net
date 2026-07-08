@@ -30,7 +30,7 @@ python pipelines/train.py \
   seed=42 \
   lr=0.001 \
   hami_weight=1.0 \
-  use_sparse_tp=true \
+  use_sparse_tp=false \
   remove_init=true \
   used_cache=false \
   precision=32 \
