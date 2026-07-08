@@ -175,20 +175,22 @@ class MdbDataset(Dataset):
             data_dict = pickle.loads(data_dict)
             D_gt = None
             try:
-                cid, num_nodes, atoms, pos, Ham, Ham_init, C_init, D_gt = \
+                cid, num_nodes, atoms, pos, labels, Ham, Ham_init, C_init, D_gt = \
                     data_dict['id'], data_dict['num_nodes'], \
                     np.frombuffer(data_dict['atoms'], np.int32), \
                     np.frombuffer(data_dict['pos'], np.float64), \
+                    data_dict['labels'], \
                     np.frombuffer(data_dict['Ham'], np.float64), \
                     data_dict['Ham_init'], \
                     data_dict['C_init'], \
                     data_dict['D_gt']
             except Exception as e:
                 # D_gt is added in QH9, which requires np.frombuffer
-                cid, num_nodes, atoms, pos, Ham, Ham_init, C_init, D_gt = \
+                cid, num_nodes, atoms, pos, labels, Ham, Ham_init, C_init, D_gt = \
                     data_dict['id'], data_dict['num_nodes'], \
                     data_dict['atoms'], \
                     data_dict['pos'], \
+                    data_dict.get('labels', None), \
                     data_dict['Ham'], \
                     data_dict['Ham_init'], \
                     data_dict['C_init'], \
@@ -253,7 +255,11 @@ class MdbDataset(Dataset):
         data = neighbor_finder(data)
         min_nodes_foreachGroup = 4
 
-        build_label(data, num_labels = int(N_atom/min_nodes_foreachGroup),method = 'kmeans')
+        if labels is not None and len(labels) == N_atom:
+            data.labels = torch.tensor(labels).long()
+            data.num_labels = len(torch.unique(data.labels))
+        else:
+            build_label(data, num_labels=int(N_atom / min_nodes_foreachGroup), method='kmeans')
 
         return {
                 "idx":idx,
