@@ -868,7 +868,7 @@ class GrassmannError(_OrbitalEnergyErrorBase):
                     M_cross = c_gt_occ.T @ overlap_matrix @ c_pred_occ
                     if self.grassmann_metric == 'geodesic':
                         _, s, _ = torch.linalg.svd(M_cross)
-                        theta = torch.arccos(s.clamp(-1, 1))
+                        theta = torch.acos(s.clamp(-1, 1))
                         grass_losses.append((theta ** 2).sum())
                     else:
                         grass_losses.append(nocc - torch.clamp((M_cross ** 2).sum(), max=nocc))
