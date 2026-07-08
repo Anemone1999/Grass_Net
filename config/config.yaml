@@ -87,6 +87,7 @@ dm_val_loss: 'mae'
 ortho_dm_val_loss: 'mae'
 energy_align_dm_val_loss: 'mae'
 ed_type: 'naive' # [naive, trunc]
+ed_trunc_factor: 3.0
 ngpus: 1
 num_nodes: 1
 precision: 32 # the precison for training, can use 16 for mixed precision
