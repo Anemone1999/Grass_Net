@@ -237,9 +237,10 @@ class DataModule(LightningDataModule):
             shuffle=shuffle,
             num_workers=self.config["dataloader_num_workers"],
             collate_fn = collate_fn_unified(long_cutoff_upper = 9,unit = self.config["unit"]),
-            # max_num_batches=num_batches,
             drop_last=True,
             pin_memory=True,
+            persistent_workers=(self.config["dataloader_num_workers"] > 0),
+            prefetch_factor=2,
         )
 
         return dl

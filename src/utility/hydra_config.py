@@ -72,7 +72,6 @@ class Config(BaseSchema):
     enable_forces: bool = False
     enable_energy_hami_error: bool = False
     enable_hami_orbital_energy: bool = False
-
     enable_DM: bool = False
     enable_ortho_DM: bool = False
     enable_exceed_pi: bool = False

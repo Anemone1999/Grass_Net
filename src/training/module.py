@@ -481,21 +481,32 @@ class LNNP(LightningModule):
         batch_data = self.data_transform(batch_data)
         should_skip_local = torch.tensor([0], dtype=torch.int32, device=self.device)
         with torch.set_grad_enabled(stage == "train" or self.enable_forces):
-            # TODO: the model doesn't necessarily need to return a derivative once
-            # Union typing works under TorchScript (https://github.com/pytorch/pytorch/pull/53180)
-            # fock, pred, noise_pred, deriv = self(batch.z, batch.pos, batch.batch)
             batch_data = self(batch_data)
         
         loss_func_list = self.loss_func_list_train if loss_func_list is [] else loss_func_list
         error_dict = {"loss":0}
 
-        if stage == "test" or len(loss_func_list) > 1:
+        # Check whether active losses need D/obe (density matrix / orbital energy), which
+        # requires expensive eigh via cal_D_from_H.  In training modes where only hamiltonian
+        # and/or grassmann/stationarity losses are active, this is pure overhead.
+        _active_loss_names = {getattr(lf, 'name', '') for lf in loss_func_list}
+        _dm_obe_loss_names = {
+            'density_matrix_loss', 'energy_align_dm_loss', 'orbital_energy_loss',
+            'orthogonalized_density_matrix_loss', 'hamiltonian_weighted_dm_loss',
+            'real_space_rho_loss', 'Ecore_error', 'dipole_error',
+            'total_energy_loss', 'acc_ratio', 'density_mat_based_hamiltonian_loss'
+        }
+        _needs_dm_obe = bool(_active_loss_names & _dm_obe_loss_names)
+        _needs_full_hami = bool(_active_loss_names & {'energy_hami_loss', 'grassmann_loss'}) or _needs_dm_obe
+
+        if stage == "test" or (len(loss_func_list) > 1 and _needs_full_hami):
+            batch_data = self.model.hami_model.build_final_matrix(batch_data, sym_type="sym")
+
+        if (stage == "test" and _needs_dm_obe) or (stage == "train" and _needs_dm_obe):
             D_pred_list = []
             D_gt_list = []
             obe_pred_list = []
             obe_gt_list = []
-            batch_data = self.model.hami_model.build_final_matrix(batch_data, sym_type="sym")
-            # batch_data = self.model.representation_model.build_final_matrix(batch_data)
 
             for i in range(len(batch_data["pred_hamiltonian"])):
                 batch_data["fock"][i] = batch_data["fock"][i] + batch_data["fock_init"][i]
@@ -514,8 +525,6 @@ class LNNP(LightningModule):
             batch_data['obe_gt'] = obe_gt_list
             batch_data['obe_pred'] = obe_pred_list
 
-            # check_fock(batch_data, self.hparams.xc_type, self.hparams.pos_unit)
-            
             ## skip the batch since ed is failed
             if torch.distributed.is_available() and torch.distributed.is_initialized():
                 torch.distributed.all_reduce(should_skip_local, op=torch.distributed.ReduceOp.MAX)

@@ -679,7 +679,8 @@ class EnergyHamiError(ErrorMetric):
             mean_target = non_diag_target.abs().mean(axis=(1,2)) * sample_weight
             batch_data['pred_hamiltonian_non_diagonal_blocks'] = mean_target[:, None, None] * batch_data['pred_hamiltonian_non_diagonal_blocks']
         
-        self.trainer.model.hami_model.build_final_matrix(batch_data) 
+        if 'pred_hamiltonian' not in batch_data:
+            self.trainer.model.hami_model.build_final_matrix(batch_data)
         full_hami = batch_data['pred_hamiltonian']
         hami_energy = torch.zeros_like(energy,dtype=torch.float64)
         target_energy = torch.zeros_like(energy,dtype=torch.float64)
