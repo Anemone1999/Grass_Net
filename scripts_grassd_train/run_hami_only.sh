@@ -34,6 +34,7 @@ python pipelines/train.py \
   use_sparse_tp=false \
   remove_init=true \
   used_cache=false \
+  job_id=v2_hami_only \
   wandb.open=true \
   wandb.wandb_project=grassD_train \
   wandb.wandb_api_key=mVry0ZUvTErOCGFq1cBjV \
