@@ -967,4 +967,76 @@ class GrassmannError(_OrbitalEnergyErrorBase):
             error_dict['loss'] += self.stationarity_weight * ls
 
         return error_dict
-    
+
+
+class GrassmannWarmupWrapper:
+    """外挂 warmup wrapper: 线性缩放 grassmann_weight，不修改 GrassmannError 本身。
+
+    step 0:    weight = 0
+    step N/2:  weight = target * 0.5
+    step N:    weight = target (warmup 完成)
+
+    Usage:
+        raw = GrassmannError(grassmann_weight=1.0, ...)
+        grass = GrassmannWarmupWrapper(raw, warmup_steps=5000)
+        grass.cal_loss(batch_data, error_dict)
+    """
+    def __init__(self, grassmann_error, warmup_steps=5000):
+        self._inner = grassmann_error
+        self.warmup_steps = warmup_steps
+        self._call_count = 0
+
+        # 对外暴露属性（与 GrassmannError 保持一致）
+        self.name = self._inner.name
+        self.loss_weight = self._inner.loss_weight
+
+    @property
+    def grassmann_weight(self):
+        return self._inner.grassmann_weight
+
+    @grassmann_weight.setter
+    def grassmann_weight(self, v):
+        self._inner.grassmann_weight = v
+
+    @property
+    def stationarity_weight(self):
+        return self._inner.stationarity_weight
+
+    @property
+    def enable_grassmann(self):
+        return self._inner.enable_grassmann
+
+    @property
+    def trainer(self):
+        return self._inner.trainer
+
+    @trainer.setter
+    def trainer(self, v):
+        self._inner.trainer = v
+
+    def _compute_ratio(self):
+        if self.warmup_steps <= 0:
+            return 1.0
+        return min(1.0, float(self._call_count) / self.warmup_steps)
+
+    def cal_loss(self, batch_data, error_dict=None, metric=None):
+        if error_dict is None:
+            error_dict = {}
+
+        ratio = self._compute_ratio()
+        self._call_count += 1
+
+        # 暂时把内部权重归零，让 inner 正常计算指标但不累计到 loss
+        orig_gw = self._inner.grassmann_weight
+        self._inner.grassmann_weight = 0.0
+
+        self._inner.cal_loss(batch_data, error_dict, metric)
+
+        # 恢复原始权重，自己按 warmup 比例累计到 loss
+        self._inner.grassmann_weight = orig_gw
+        lg = error_dict.get('grassmann_loss')
+        if lg is not None and orig_gw > 0:
+            error_dict["loss"] = error_dict.get("loss", 0)
+            error_dict['loss'] = error_dict['loss'] + (orig_gw * ratio) * lg
+
+        return error_dict

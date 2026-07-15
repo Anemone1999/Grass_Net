@@ -33,7 +33,8 @@ from .losses import ExceedPiError, \
                     DMbasedHamiltonianError, \
                     EcoreError, \
                     DipoleError, \
-                    GrassmannError
+                    GrassmannError, \
+                    GrassmannWarmupWrapper
 
 
 class FloatCastDatasetWrapper(T.BaseTransform):
@@ -189,12 +190,17 @@ class LNNP(LightningModule):
                                                                 self.hparams.pos_unit,
                                                                 self.hparams.basis))
         if self.enable_grassmann or self.enable_stationarity:
-            self.loss_func_list_train.append(GrassmannError(
+            grass_err = GrassmannError(
                 self.enable_grassmann, self.enable_stationarity,
                 self.hparams.grassmann_weight, self.hparams.stationarity_weight,
                 self, self.hparams.basis, ed_type=self.hparams.ed_type,
                 trunc_factor=self.hparams.get("ed_trunc_factor", 3.0),
-                grassmann_metric=self.hparams.get("grassmann_metric", "projection")))
+                grassmann_metric=self.hparams.get("grassmann_metric", "projection"))
+
+            warmup_steps = self.hparams.get("grassmann_warmup_steps", 0)
+            if warmup_steps > 0:
+                grass_err = GrassmannWarmupWrapper(grass_err, warmup_steps=warmup_steps)
+            self.loss_func_list_train.append(grass_err)
         self.loss_func_list_val = []
         if self.enable_hami:
             self.loss_func_list_val.append(HamiltonianError(self.hparams.hami_weight,self.hparams.hami_val_loss, self.hparams.hami_model.name))
