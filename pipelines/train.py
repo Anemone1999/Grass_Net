@@ -162,6 +162,7 @@ def main(config):
         gradient_clip_val = config.gradient_clip_val,
         use_distributed_sampler = False, # Manual sharding done inside datamodule.
         num_sanity_val_steps = config.num_sanity_val_steps,
+        log_every_n_steps = config.get("log_every_n_steps", 50),
     )
 
     # use previous ckpt if have one
@@ -180,9 +181,10 @@ def main(config):
     trainer.fit(model, data, ckpt_path=latest_file)
 
     # run test set after completing the fit
-    latest_file = get_latest_ckpt(config.log_dir)
-    print(latest_file,config.log_dir)
-    trainer.test(model, data,ckpt_path=latest_file)
+    if not config.get("skip_test", False):
+        latest_file = get_latest_ckpt(config.log_dir)
+        print(latest_file,config.log_dir)
+        trainer.test(model, data,ckpt_path=latest_file)
 
 
 if __name__ == "__main__":

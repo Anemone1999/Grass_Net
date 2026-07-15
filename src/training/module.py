@@ -381,6 +381,11 @@ class LNNP(LightningModule):
         elif self.hparams.pred_target == "H":
             return self.step(batch_data, "train", self.loss_func_list_train)
 
+    def on_before_optimizer_step(self, optimizer):
+        """Log gradient norm for diagnostics."""
+        total_norm = sum(p.grad.data.norm(2).item() ** 2 for p in self.parameters() if p.grad is not None) ** 0.5
+        self.log('train/grad_norm', total_norm, on_step=True, prog_bar=False)
+
     def validation_step(self, batch_data, batch_idx, dataloader_idx=0):
         # validation step
         if dataloader_idx == 0:

@@ -119,6 +119,8 @@ class Config(BaseSchema):
     grassmann_weight: float = 0.001
     stationarity_weight: float = 0.05
     grassmann_metric: str = 'projection'  # 'projection', 'densityS', or 'geodesic' (SVD, unstable)
+    grassmann_warmup_steps: int = 0
+    grassmann_pi_iter: int = 19
     ed_type: str = 'naive'
     ed_trunc_factor: float = 3.0
     sparse_loss: bool = False
@@ -128,6 +130,9 @@ class Config(BaseSchema):
     gradient_clip_val: Any = None
     early_stopping_patience: int = 30
     val_check_interval: Any = None #follow pytorch lightning
+    check_val_every_n_epoch: int = 5
+    log_every_n_steps: int = 50
+    skip_test: bool = False
     test_interval: int = 10 #Test interval, one test per n epochs (default = 10)
     save_interval: int = 10 #Save interval, one save per n epochs (default = 10)
     ############: Any
@@ -155,4 +160,3 @@ class Config(BaseSchema):
     test_energy_hami: bool = False
     test_homo_lumo_hami: bool = False
     num_sanity_val_steps: int = 0
-    check_val_every_n_epoch: int = 1

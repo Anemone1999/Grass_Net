@@ -96,6 +96,8 @@ early_stopping_patience: 300000
 val_check_interval: null #follow pytorch lightning
 test_interval: 10 #Test interval, one test per n epochs (default: 10) # NOT used
 save_interval: 10 #Save interval, one save per n epochs (default: 10)
+log_every_n_steps: 50
+skip_test: false
 ############
 # data realted config
 # data_name: pubchem  #the target dataset
