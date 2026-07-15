@@ -1,22 +1,90 @@
 import torch
-from torch.optim import AdamW
-from torch.optim.lr_scheduler import ReduceLROnPlateau, CosineAnnealingLR
-from torch.nn.functional import mse_loss, l1_loss,huber_loss
-from collections import defaultdict
-from transformers import get_polynomial_decay_schedule_with_warmup
 import glob
 import os
-import numpy as np
-from pytorch_lightning import LightningModule
-from ..models.model import create_model
-from ..utility.pyscf import get_pyscf_obj_from_dataset, get_homo_lumo_from_h, get_energy_from_h
-from ..dataset.buildblock import get_conv_variable_lin,block2matrix
-from ..utility.eigen_solver import ED_trunc_p, ED_trunc, ED_PI_Layer
-from functools import partial
-import torch_geometric.transforms as T
 import random
 import pickle
 import lmdb
+import numpy as np
+from collections import defaultdict
+from functools import partial
+from torch.optim import AdamW
+from torch.optim.lr_scheduler import ReduceLROnPlateau, CosineAnnealingLR
+from torch.nn.functional import mse_loss, l1_loss, huber_loss
+from pytorch_lightning import LightningModule
+from transformers import get_polynomial_decay_schedule_with_warmup
+import torch_geometric.transforms as T
+from ..models.model import create_model
+from ..utility.pyscf import get_pyscf_obj_from_dataset, get_homo_lumo_from_h, get_energy_from_h
+from ..dataset.buildblock import get_conv_variable_lin, block2matrix
+from ..utility.eigen_solver import ED_trunc_p, ED_trunc, ED_PI_Layer
+
+
+class StableAcos(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx, x, threshold=0.99, eps=1e-6):
+        ctx.save_for_backward(x)
+        ctx.threshold = threshold
+        ctx.eps = eps
+        return torch.acos(x)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        x, = ctx.saved_tensors
+        threshold = ctx.threshold
+        eps = ctx.eps
+        sqrt_term = torch.sqrt(torch.clamp(1.0 - x**2, min=0.0))
+        denominator = torch.where(
+            torch.abs(x) > threshold,
+            sqrt_term + eps,
+            sqrt_term
+        )
+        grad_x = -grad_output / denominator
+        return grad_x, None, None
+
+
+class StableEigh(torch.autograd.Function):
+    """
+    稳定的特征值分解算子，专为量子化学/流形损失设计。
+    解决简并轨道梯度爆炸，并阻断虚轨道之间的无用梯度。
+    """
+    @staticmethod
+    def forward(ctx, matrix, trunc_factor=3.0, nocc=-1):
+        vals, vecs = torch.linalg.eigh(matrix)
+        ctx.save_for_backward(vals, vecs)
+        ctx.trunc_factor = trunc_factor
+        ctx.nocc = nocc
+        return vals, vecs
+
+    @staticmethod
+    def backward(ctx, grad_vals, grad_vecs):
+        vals, vecs = ctx.saved_tensors
+        trunc_factor = ctx.trunc_factor
+        nocc = ctx.nocc
+
+        diff = vals.unsqueeze(-1) - vals.unsqueeze(-2)
+        eps = 10.0 ** (-trunc_factor)
+
+        valid_mask = torch.abs(diff) > eps
+        safe_diff = torch.where(valid_mask, diff, torch.ones_like(diff))
+        k = torch.where(valid_mask, 1.0 / safe_diff, torch.zeros_like(diff))
+
+        if nocc > 0 and nocc < vals.shape[-1]:
+            N = vals.shape[-1]
+            idx = torch.arange(N, device=vals.device)
+            virt_mask = (idx >= nocc).unsqueeze(-1) & (idx >= nocc).unsqueeze(-2)
+            k = torch.where(virt_mask, torch.zeros_like(k), k)
+
+        U_t = vecs.transpose(-1, -2)
+        dU = grad_vecs
+        ut_du = torch.matmul(U_t, dU)
+        inner = k * ut_du + torch.diag_embed(grad_vals)
+        grad_matrix = torch.matmul(vecs, torch.matmul(inner, U_t))
+        grad_matrix = (grad_matrix + grad_matrix.transpose(-1, -2)) * 0.5
+        return grad_matrix, None, None
+
+
+def stable_acos(x, threshold=0.99, eps=1e-6):
+    return StableAcos.apply(x, threshold, eps)
 
 
 HATREE_TO_KCAL = 627.5096
@@ -810,27 +878,28 @@ class GrassmannError(_OrbitalEnergyErrorBase):
         self.grassmann_metric = grassmann_metric
 
     @staticmethod
-    def _solve_eigh(full_hamiltonian, overlap_matrix, ed_type='trunc', trunc_factor=3.0):
+    def _solve_eigh(full_hamiltonian, overlap_matrix, nocc, ed_type='trunc', trunc_factor=3.0):
         eps = 1e-8
         try:
+            # S 矩阵的正交化过程通常不会有强烈的梯度问题，保持原生即可
             s_eigvals, s_eigvecs = torch.linalg.eigh(overlap_matrix)
             s_eigvals = torch.where(s_eigvals > eps, s_eigvals, eps)
             frac = s_eigvecs / torch.sqrt(s_eigvals).unsqueeze(-2)
+            
+            # 正交化后的 Fock/Hamiltonian 矩阵
             Fs = frac.T @ full_hamiltonian @ frac
 
-            if ed_type == 'naive':
-                e_vals, e_vecs = torch.linalg.eigh(Fs)
-            elif ed_type == 'trunc':
-                n = Fs.shape[-1]
-                e_vals, e_vecs = ED_trunc.apply(Fs.unsqueeze(0), trunc_factor, n)
-                e_vals, e_vecs = e_vals.squeeze(0), e_vecs.squeeze(0)
+            # 使用我们新设计的 StableEigh，替换掉容易崩溃的 ED_trunc
+            if ed_type in ['trunc', 'naive']:
+                # 传入 nocc，激活虚轨道梯度截断
+                e_vals, e_vecs = StableEigh.apply(Fs, trunc_factor, nocc)
             elif ed_type == 'trunc_cpu':
-                n = Fs.shape[-1]
                 Fs_cpu = Fs.cpu()
-                e_vals, e_vecs = ED_trunc.apply(Fs_cpu.unsqueeze(0), trunc_factor, n)
-                e_vals = e_vals.to(Fs.device); e_vecs = e_vecs.to(Fs.device)
-                e_vals, e_vecs = e_vals.squeeze(0), e_vecs.squeeze(0)
+                e_vals, e_vecs = StableEigh.apply(Fs_cpu, trunc_factor, nocc)
+                e_vals, e_vecs = e_vals.to(Fs.device), e_vecs.to(Fs.device)
             elif ed_type == 'power_iteration':
+                # 注意：PI 方法不受 eigh 导数问题影响，但这里需要保持接口一致
+                n = Fs.shape[-1]
                 e_vals, e_vecs = ED_PI_Layer(Fs.unsqueeze(0), n, False)
                 e_vals, e_vecs = e_vals.squeeze(0), e_vecs.squeeze(0)
             else:
@@ -857,8 +926,9 @@ class GrassmannError(_OrbitalEnergyErrorBase):
             nelec = atomic_numbers.sum().item()
             nocc = nelec // 2
 
-            sym_gt, e_gt, c_gt = self._solve_eigh(full_hami_i, overlap_matrix, self.ed_type, self.trunc_factor)
-            sym_pred, e_pred, c_pred = self._solve_eigh(full_hami_pred_i, overlap_matrix, self.ed_type, self.trunc_factor)
+            # 将 nocc 传给 _solve_eigh
+            sym_gt, e_gt, c_gt = self._solve_eigh(full_hami_i, overlap_matrix, nocc, self.ed_type, self.trunc_factor)
+            sym_pred, e_pred, c_pred = self._solve_eigh(full_hami_pred_i, overlap_matrix, nocc, self.ed_type, self.trunc_factor)
 
             if sym_gt and sym_pred:
                 c_gt_occ = c_gt[:, :nocc]
@@ -871,13 +941,15 @@ class GrassmannError(_OrbitalEnergyErrorBase):
                         P_gt = c_gt_occ @ c_gt_occ.T @ overlap_matrix
                         grass_losses.append(((P_pred - P_gt) ** 2).sum() / c_gt_occ.shape[0])
                     elif self.grassmann_metric == 'geodesic':
-                        # canonical geodesic (SVD principal angles) — unstable when
-                        # singular values are near-degenerate (1/(s_j²-s_i²) in grads)
-                        _, s, _ = torch.linalg.svd(M_cross)
-                        theta = torch.acos(s.clamp(-1, 1))
+                        # canonical geodesic (SVD principal angles)
+                        _, sigma, _ = torch.linalg.svd(M_cross)
+                        theta = stable_acos(sigma.clamp(-1, 1))
                         grass_losses.append((theta ** 2).sum())
                     else:
-                        grass_losses.append(nocc - torch.clamp((M_cross ** 2).sum(), max=nocc))
+                        #grass_losses.append(nocc - torch.clamp((M_cross ** 2).sum(), max=nocc))
+                        grass_losses.append(
+                            nocc - torch.linalg.matrix_norm(M_cross, ord='fro') ** 2
+                            )
 
                 if compute_stat:
                     D_pred = 2 * c_pred_occ @ c_pred_occ.T
