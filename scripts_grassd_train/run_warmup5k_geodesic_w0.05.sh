@@ -1,12 +1,12 @@
 #!/bin/bash
-# Task: hami*1 + grassd_loss(geodesic)*0.05 + warmup 5000
+# Task: hami*1 + grassd_loss(geodesic)*0.05
 set -e
 
 DATASET="/home/pepe/workbench/basisset_scaling/lmdb_data/sphnet_gcnet_ethanol/def2svp/data.mdb/data.mdb"
 INDEX="/home/pepe/workbench/basisset_scaling/lmdb_data/sphnet_gcnet_ethanol/def2svp"
 INDEX_FILE="MD17_ethanol_trainset_with_5000_data.pt"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-TASK_NAME="v2_geodesic_w0.05_warmup5k_${TIMESTAMP}"
+TASK_NAME="v2_geodesic_w0.05_${TIMESTAMP}"
 
 cd /home/pepe/codebench/GrassD_sphnet_ver2
 
@@ -33,7 +33,6 @@ python pipelines/train.py \
   +enable_stationarity=false \
   +grassmann_weight=0.05 \
   +grassmann_metric=geodesic \
-  +grassmann_warmup_steps=5000 \
   ed_type=naive \
   ed_trunc_factor=3.0 \
   gradient_clip_val=0.16 \

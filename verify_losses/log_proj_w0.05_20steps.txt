@@ -1,0 +1,80 @@
+step: 0.0
+train_per_step/loss: 0.06383784115314484;train_per_step/hami_loss_mae: 0.008741524070501328;train_per_step/hami_loss_mse: 0.0003970075340475887;train_per_step/hami_loss_maemse: 0.009138531051576138;train_per_step/grassmann_loss: 1.0939862728118896;learningrate: 9.999999974752427e-07;train/grad_norm: 0.5235846638679504;
+step: 0.0
+train_per_step/loss: 0.06383784115314484;train_per_step/hami_loss_mae: 0.008741524070501328;train_per_step/hami_loss_mse: 0.0003970075340475887;train_per_step/hami_loss_maemse: 0.009138531051576138;train_per_step/grassmann_loss: 1.0939862728118896;learningrate: 9.999999974752427e-07;train/grad_norm: 0.5235846638679504;
+step: 1.0
+train_per_step/loss: 0.06496232748031616;train_per_step/hami_loss_mae: 0.00911622028797865;train_per_step/hami_loss_mse: 0.00043109615216962993;train_per_step/hami_loss_maemse: 0.009547317400574684;train_per_step/grassmann_loss: 1.1083002090454102;learningrate: 1.9999999949504854e-06;train/grad_norm: 0.6757348775863647;
+step: 1.0
+train_per_step/loss: 0.06496232748031616;train_per_step/hami_loss_mae: 0.00911622028797865;train_per_step/hami_loss_mse: 0.00043109615216962993;train_per_step/hami_loss_maemse: 0.009547317400574684;train_per_step/grassmann_loss: 1.1083002090454102;learningrate: 1.9999999949504854e-06;train/grad_norm: 0.6757348775863647;
+step: 2.0
+train_per_step/loss: 0.0670117661356926;train_per_step/hami_loss_mae: 0.008900794200599194;train_per_step/hami_loss_mse: 0.00040931571857072413;train_per_step/hami_loss_maemse: 0.009310109540820122;train_per_step/grassmann_loss: 1.1540331840515137;learningrate: 3.000000106112566e-06;train/grad_norm: 1.9031366109848022;
+step: 2.0
+train_per_step/loss: 0.0670117661356926;train_per_step/hami_loss_mae: 0.008900794200599194;train_per_step/hami_loss_mse: 0.00040931571857072413;train_per_step/hami_loss_maemse: 0.009310109540820122;train_per_step/grassmann_loss: 1.1540331840515137;learningrate: 3.000000106112566e-06;train/grad_norm: 1.9031366109848022;
+step: 3.0
+train_per_step/loss: 0.06482977420091629;train_per_step/hami_loss_mae: 0.009329154156148434;train_per_step/hami_loss_mse: 0.0004475889727473259;train_per_step/hami_loss_maemse: 0.00977674312889576;train_per_step/grassmann_loss: 1.1010606288909912;learningrate: 3.999999989900971e-06;train/grad_norm: 0.8246739506721497;
+step: 3.0
+train_per_step/loss: 0.06482977420091629;train_per_step/hami_loss_mae: 0.009329154156148434;train_per_step/hami_loss_mse: 0.0004475889727473259;train_per_step/hami_loss_maemse: 0.00977674312889576;train_per_step/grassmann_loss: 1.1010606288909912;learningrate: 3.999999989900971e-06;train/grad_norm: 0.8246739506721497;
+step: 4.0
+train_per_step/loss: 0.09072371572256088;train_per_step/hami_loss_mae: 0.009046788327395916;train_per_step/hami_loss_mse: 0.0004258451226633042;train_per_step/hami_loss_maemse: 0.00947263278067112;train_per_step/grassmann_loss: 1.6250216960906982;learningrate: 4.999999873689376e-06;train/grad_norm: 17.564393997192383;
+step: 4.0
+train_per_step/loss: 0.09072371572256088;train_per_step/hami_loss_mae: 0.009046788327395916;train_per_step/hami_loss_mse: 0.0004258451226633042;train_per_step/hami_loss_maemse: 0.00947263278067112;train_per_step/grassmann_loss: 1.6250216960906982;learningrate: 4.999999873689376e-06;train/grad_norm: 17.564393997192383;
+step: 5.0
+train_per_step/loss: 0.09981877356767654;train_per_step/hami_loss_mae: 0.008966968394815922;train_per_step/hami_loss_mse: 0.00041776569560170174;train_per_step/hami_loss_maemse: 0.00938473455607891;train_per_step/grassmann_loss: 1.808680772781372;learningrate: 6.000000212225132e-06;train/grad_norm: 6.968752861022949;
+step: 5.0
+train_per_step/loss: 0.09981877356767654;train_per_step/hami_loss_mae: 0.008966968394815922;train_per_step/hami_loss_mse: 0.00041776569560170174;train_per_step/hami_loss_maemse: 0.00938473455607891;train_per_step/grassmann_loss: 1.808680772781372;learningrate: 6.000000212225132e-06;train/grad_norm: 6.968752861022949;
+step: 6.0
+train_per_step/loss: 0.11014795303344727;train_per_step/hami_loss_mae: 0.008809264749288559;train_per_step/hami_loss_mse: 0.0004027619434054941;train_per_step/hami_loss_maemse: 0.009212026372551918;train_per_step/grassmann_loss: 2.0187184810638428;learningrate: 7.000000096013537e-06;train/grad_norm: 4.819633483886719;
+step: 6.0
+train_per_step/loss: 0.11014795303344727;train_per_step/hami_loss_mae: 0.008809264749288559;train_per_step/hami_loss_mse: 0.0004027619434054941;train_per_step/hami_loss_maemse: 0.009212026372551918;train_per_step/grassmann_loss: 2.0187184810638428;learningrate: 7.000000096013537e-06;train/grad_norm: 4.819633483886719;
+step: 7.0
+train_per_step/loss: 0.1517447829246521;train_per_step/hami_loss_mae: 0.009138727560639381;train_per_step/hami_loss_mse: 0.0004351141687948257;train_per_step/hami_loss_maemse: 0.009573841467499733;train_per_step/grassmann_loss: 2.843418598175049;learningrate: 7.999999979801942e-06;train/grad_norm: 7.001810073852539;
+step: 7.0
+train_per_step/loss: 0.1517447829246521;train_per_step/hami_loss_mae: 0.009138727560639381;train_per_step/hami_loss_mse: 0.0004351141687948257;train_per_step/hami_loss_maemse: 0.009573841467499733;train_per_step/grassmann_loss: 2.843418598175049;learningrate: 7.999999979801942e-06;train/grad_norm: 7.001810073852539;
+step: 8.0
+train_per_step/loss: 0.16868209838867188;train_per_step/hami_loss_mae: 0.009290792047977448;train_per_step/hami_loss_mse: 0.000440044270362705;train_per_step/hami_loss_maemse: 0.009730836376547813;train_per_step/grassmann_loss: 3.179025411605835;learningrate: 9.000000318337698e-06;train/grad_norm: 5.5496296882629395;
+step: 8.0
+train_per_step/loss: 0.16868209838867188;train_per_step/hami_loss_mae: 0.009290792047977448;train_per_step/hami_loss_mse: 0.000440044270362705;train_per_step/hami_loss_maemse: 0.009730836376547813;train_per_step/grassmann_loss: 3.179025411605835;learningrate: 9.000000318337698e-06;train/grad_norm: 5.5496296882629395;
+step: 9.0
+train_per_step/loss: 0.17246226966381073;train_per_step/hami_loss_mae: 0.008931063115596771;train_per_step/hami_loss_mse: 0.00042333098826929927;train_per_step/hami_loss_maemse: 0.009354393929243088;train_per_step/grassmann_loss: 3.262157440185547;learningrate: 9.999999747378752e-06;train/grad_norm: 3.0825653076171875;
+step: 9.0
+train_per_step/loss: 0.17246226966381073;train_per_step/hami_loss_mae: 0.008931063115596771;train_per_step/hami_loss_mse: 0.00042333098826929927;train_per_step/hami_loss_maemse: 0.009354393929243088;train_per_step/grassmann_loss: 3.262157440185547;learningrate: 9.999999747378752e-06;train/grad_norm: 3.0825653076171875;
+step: 10.0
+train_per_step/loss: 0.19871187210083008;train_per_step/hami_loss_mae: 0.009267373010516167;train_per_step/hami_loss_mse: 0.0004456707101780921;train_per_step/hami_loss_maemse: 0.00971304439008236;train_per_step/grassmann_loss: 3.7799766063690186;learningrate: 1.1000000085914508e-05;train/grad_norm: 3.8261120319366455;
+step: 10.0
+train_per_step/loss: 0.19871187210083008;train_per_step/hami_loss_mae: 0.009267373010516167;train_per_step/hami_loss_mse: 0.0004456707101780921;train_per_step/hami_loss_maemse: 0.00971304439008236;train_per_step/grassmann_loss: 3.7799766063690186;learningrate: 1.1000000085914508e-05;train/grad_norm: 3.8261120319366455;
+step: 11.0
+train_per_step/loss: 0.23567098379135132;train_per_step/hami_loss_mae: 0.00968603603541851;train_per_step/hami_loss_mse: 0.0004862293426413089;train_per_step/hami_loss_maemse: 0.010172264650464058;train_per_step/grassmann_loss: 4.509974479675293;learningrate: 1.2000000424450263e-05;train/grad_norm: 4.519869327545166;
+step: 11.0
+train_per_step/loss: 0.23567098379135132;train_per_step/hami_loss_mae: 0.00968603603541851;train_per_step/hami_loss_mse: 0.0004862293426413089;train_per_step/hami_loss_maemse: 0.010172264650464058;train_per_step/grassmann_loss: 4.509974479675293;learningrate: 1.2000000424450263e-05;train/grad_norm: 4.519869327545166;
+step: 12.0
+train_per_step/loss: 0.2479097694158554;train_per_step/hami_loss_mae: 0.009518095292150974;train_per_step/hami_loss_mse: 0.00048112630611285567;train_per_step/hami_loss_maemse: 0.009999221190810204;train_per_step/grassmann_loss: 4.758211135864258;learningrate: 1.2999999853491317e-05;train/grad_norm: 1.8559755086898804;
+step: 12.0
+train_per_step/loss: 0.2479097694158554;train_per_step/hami_loss_mae: 0.009518095292150974;train_per_step/hami_loss_mse: 0.00048112630611285567;train_per_step/hami_loss_maemse: 0.009999221190810204;train_per_step/grassmann_loss: 4.758211135864258;learningrate: 1.2999999853491317e-05;train/grad_norm: 1.8559755086898804;
+step: 13.0
+train_per_step/loss: 0.25927814841270447;train_per_step/hami_loss_mae: 0.00930540356785059;train_per_step/hami_loss_mse: 0.00046385073801502585;train_per_step/hami_loss_maemse: 0.009769254364073277;train_per_step/grassmann_loss: 4.990178108215332;learningrate: 1.4000000192027073e-05;train/grad_norm: 0.9023767113685608;
+step: 13.0
+train_per_step/loss: 0.25927814841270447;train_per_step/hami_loss_mae: 0.00930540356785059;train_per_step/hami_loss_mse: 0.00046385073801502585;train_per_step/hami_loss_maemse: 0.009769254364073277;train_per_step/grassmann_loss: 4.990178108215332;learningrate: 1.4000000192027073e-05;train/grad_norm: 0.9023767113685608;
+step: 14.0
+train_per_step/loss: 0.274553120136261;train_per_step/hami_loss_mae: 0.009971600025892258;train_per_step/hami_loss_mse: 0.0005342953372746706;train_per_step/hami_loss_maemse: 0.010505895130336285;train_per_step/grassmann_loss: 5.28094482421875;learningrate: 1.4999999621068127e-05;train/grad_norm: 1.8585337400436401;
+step: 14.0
+train_per_step/loss: 0.274553120136261;train_per_step/hami_loss_mae: 0.009971600025892258;train_per_step/hami_loss_mse: 0.0005342953372746706;train_per_step/hami_loss_maemse: 0.010505895130336285;train_per_step/grassmann_loss: 5.28094482421875;learningrate: 1.4999999621068127e-05;train/grad_norm: 1.8585337400436401;
+step: 15.0
+train_per_step/loss: 0.3031344413757324;train_per_step/hami_loss_mae: 0.010137553326785564;train_per_step/hami_loss_mse: 0.0005338108749128878;train_per_step/hami_loss_maemse: 0.010671364143490791;train_per_step/grassmann_loss: 5.849261283874512;learningrate: 1.5999999959603883e-05;train/grad_norm: 2.8678276538848877;
+step: 15.0
+train_per_step/loss: 0.3031344413757324;train_per_step/hami_loss_mae: 0.010137553326785564;train_per_step/hami_loss_mse: 0.0005338108749128878;train_per_step/hami_loss_maemse: 0.010671364143490791;train_per_step/grassmann_loss: 5.849261283874512;learningrate: 1.5999999959603883e-05;train/grad_norm: 2.8678276538848877;
+step: 16.0
+train_per_step/loss: 0.3189500868320465;train_per_step/hami_loss_mae: 0.010469446890056133;train_per_step/hami_loss_mse: 0.0005791714647784829;train_per_step/hami_loss_maemse: 0.011048618704080582;train_per_step/grassmann_loss: 6.158029556274414;learningrate: 1.700000029813964e-05;train/grad_norm: 2.2296206951141357;
+step: 16.0
+train_per_step/loss: 0.3189500868320465;train_per_step/hami_loss_mae: 0.010469446890056133;train_per_step/hami_loss_mse: 0.0005791714647784829;train_per_step/hami_loss_maemse: 0.011048618704080582;train_per_step/grassmann_loss: 6.158029556274414;learningrate: 1.700000029813964e-05;train/grad_norm: 2.2296206951141357;
+step: 17.0
+train_per_step/loss: 0.31299978494644165;train_per_step/hami_loss_mae: 0.01004247646778822;train_per_step/hami_loss_mse: 0.0005520409904420376;train_per_step/hami_loss_maemse: 0.010594517923891544;train_per_step/grassmann_loss: 6.048105239868164;learningrate: 1.8000000636675395e-05;train/grad_norm: 2.518113613128662;
+step: 17.0
+train_per_step/loss: 0.31299978494644165;train_per_step/hami_loss_mae: 0.01004247646778822;train_per_step/hami_loss_mse: 0.0005520409904420376;train_per_step/hami_loss_maemse: 0.010594517923891544;train_per_step/grassmann_loss: 6.048105239868164;learningrate: 1.8000000636675395e-05;train/grad_norm: 2.518113613128662;
+step: 18.0
+train_per_step/loss: 0.34905293583869934;train_per_step/hami_loss_mae: 0.010492870584130287;train_per_step/hami_loss_mse: 0.0006068309885449708;train_per_step/hami_loss_maemse: 0.01109970174729824;train_per_step/grassmann_loss: 6.759064674377441;learningrate: 1.8999999156221747e-05;train/grad_norm: 3.2044589519500732;
+step: 18.0
+train_per_step/loss: 0.34905293583869934;train_per_step/hami_loss_mae: 0.010492870584130287;train_per_step/hami_loss_mse: 0.0006068309885449708;train_per_step/hami_loss_maemse: 0.01109970174729824;train_per_step/grassmann_loss: 6.759064674377441;learningrate: 1.8999999156221747e-05;train/grad_norm: 3.2044589519500732;
+step: 19.0
+train_per_step/loss: 0.3467862904071808;train_per_step/hami_loss_mae: 0.010451775044202805;train_per_step/hami_loss_mse: 0.0006079277954995632;train_per_step/hami_loss_maemse: 0.011059703305363655;train_per_step/grassmann_loss: 6.714531898498535;learningrate: 1.9999999494757503e-05;train/grad_norm: 1.1845266819000244;
+step: 19.0
+train_per_step/loss: 0.3467862904071808;train_per_step/hami_loss_mae: 0.010451775044202805;train_per_step/hami_loss_mse: 0.0006079277954995632;train_per_step/hami_loss_maemse: 0.011059703305363655;train_per_step/grassmann_loss: 6.714531898498535;learningrate: 1.9999999494757503e-05;train/grad_norm: 1.1845266819000244;

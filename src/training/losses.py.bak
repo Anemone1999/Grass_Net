@@ -72,8 +72,8 @@ class StableEigh(torch.autograd.Function):
         trunc_factor = ctx.trunc_factor
         N_occ = ctx.N_occ
 
-        # 计算轨道能量差: \epsilon_j - \epsilon_i (标准反向传播使用此符号约定)
-        E_diff = E.unsqueeze(-2) - E.unsqueeze(-1)
+        # 计算轨道能量差: \epsilon_i - \epsilon_j (或者 \epsilon_i - \epsilon_a)
+        E_diff = E.unsqueeze(-1) - E.unsqueeze(-2)
         eps = 10.0 ** (-trunc_factor)
 
         # 简并掩码与能量惩罚矩阵 K
@@ -1072,11 +1072,8 @@ class GrassmannError(_OrbitalEnergyErrorBase):
                             )
                     else:
                         grass_losses.append(
-                            torch.clamp(
-                                nocc - torch.linalg.matrix_norm(M_cross, ord='fro') ** 2,
-                                min=0
+                            nocc - torch.linalg.matrix_norm(M_cross, ord='fro') ** 2
                             )
-                        )
 
                 if compute_stat:
                     D_pred = 2 * c_pred_occ @ c_pred_occ.T

@@ -119,7 +119,7 @@ class Config(BaseSchema):
     grassmann_weight: float = 0.001
     stationarity_weight: float = 0.05
     grassmann_metric: str = 'projection'  # 'projection', 'densityS', or 'geodesic' (SVD, unstable)
-    grassmann_warmup_steps: int = 0
+
     grassmann_pi_iter: int = 19
     ed_type: str = 'naive'
     ed_trunc_factor: float = 3.0

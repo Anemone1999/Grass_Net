@@ -52,74 +52,6 @@ weight=1.0 时发到 ~31.8, 而 control (w=0.0) 组 hami 训练收敛正常。
 
 ## 可能修复方案
 
-### A. Grassmann weight warmup
-
-**思路**: 训练开始时 grassmann_weight=0（纯 hami 训练），在前 warmup_steps 步中线性增长到目标值。
-
-**原理**: 在第 0 步时 H_pred ≈ H_init, 子空间极准 (geodesic≈0.03)。随着 hami 梯度更新，子空间可能轻微退化，但因为 geodesic weight 极小 (≈0)，这种退化不会被放大。当 weight 逐渐增大时，子空间已经稳定在 hami 收敛后的状态（此时 σ 值分布合理，SVD backward 稳定），geodesic 梯度只会微调子空间方向。
-
-**实现方式**:
-
-修改 `GrassmannError` 类，添加 warmup 逻辑：
-
-```python
-class GrassmannError(_OrbitalEnergyErrorBase):
-    def __init__(self, ..., grassmann_warmup_steps=0):
-        ...
-        self.warmup_steps = grassmann_warmup_steps
-        self._call_count = 0          # 计数每次 cal_loss 调用
-
-    def cal_loss(self, batch_data, error_dict={}, metric=None):
-        ...
-        if compute_grass and grass_losses:
-            lg = torch.stack(grass_losses).mean()
-            error_dict['grassmann_loss'] = lg.detach()
-
-            # 线性 warmup: weight 从 0 ramp 到 target
-            weight = self.grassmann_weight
-            if self.warmup_steps > 0:
-                ratio = min(1.0, self._call_count / self.warmup_steps)
-                weight = self.grassmann_weight * ratio
-            self._call_count += 1
-
-            error_dict['loss'] += weight * lg
-```
-
-**实际实现**: 使用外挂包装类 `GrassmannWarmupWrapper`，不修改 `GrassmannError` 本身（文件: `src/training/losses.py:972-1041`）：
-
-```python
-class GrassmannWarmupWrapper:
-    def __init__(self, grassmann_error, warmup_steps=5000):
-        self._inner = grassmann_error
-        self.warmup_steps = warmup_steps
-        self._call_count = 0
-
-    def cal_loss(self, batch_data, error_dict=None, metric=None):
-        self._call_count += 1
-        ratio = min(1.0, float(self._call_count) / self.warmup_steps)
-
-        orig_gw = self._inner.grassmann_weight
-        self._inner.grassmann_weight = 0.0               # 内部不累计
-        self._inner.cal_loss(batch_data, error_dict, metric)
-        self._inner.grassmann_weight = orig_gw           # 恢复
-
-        lg = error_dict.get('grassmann_loss')
-        if lg is not None and orig_gw > 0:
-            error_dict['loss'] = error_dict['loss'] + (orig_gw * ratio) * lg
-        return error_dict
-```
-
-**接线方式** (`src/training/module.py:192-203`):
-```python
-grass_err = GrassmannError(...)
-warmup_steps = self.hparams.get("grassmann_warmup_steps", 0)
-if warmup_steps > 0:
-    grass_err = GrassmannWarmupWrapper(grass_err, warmup_steps=warmup_steps)
-self.loss_func_list_train.append(grass_err)
-```
-
-使用时在 Hydra config 中增加: `+grassmann_warmup_steps=5000`，验证侧不启用 warmup（始终报告全量 loss）。
-
 ---
 
 ### B. 换 projection metric
@@ -189,7 +121,6 @@ F = torch.where(mask, 1.0 / safe_diff_sq, torch.zeros_like(diff_sq))
 | 优先级 | 方案 | 理由 |
 |--------|------|------|
 | 1 | **B. projection** + **D. 两阶段** | 已提交 projection 对照任务在跑，等结果出来后直接比。如果 projection 收敛好，直接用；如果 geodesic 想保留，用两阶段 fine-tune。 |
-| 2 | **A. warmup** | 实现代价最小，可直接验证 gradient scale 假说 |
 | 3 | **C. StableSVD** | 根因修复但实现复杂度高
 
 ## 训练任务 & Checkpoint 对照
